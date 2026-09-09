@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HRM — Candidate Database | TalentBridge</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="dash-body">
+
+<header class="dash-top">
+  <div class="container dash-top-inner">
+    <a href="index.html" class="brand"><span class="brand-mark">TB</span>Talent<span>Bridge</span></a>
+    <nav class="dash-nav">
+      <a href="crm.html">CRM · Leads</a>
+      <a href="hrm.html" class="active">HRM · Candidates</a>
+      <a href="index.html">← Public site</a>
+    </nav>
+  </div>
+</header>
+
+<div class="dash-wrap">
+  <div class="dash-head">
+    <div>
+      <h1>Candidate database</h1>
+      <p>Registrations from the public site and job applications land here, ready to move through your pipeline.</p>
+    </div>
+    <button class="btn btn-primary" onclick="openAddCandidateModal()">+ Add candidate manually</button>
+  </div>
+
+  <div class="stat-row" id="stat-row"></div>
+
+  <div class="toolbar">
+    <input type="search" id="search-input" placeholder="Search by name, role or skills…" oninput="renderCandidates()">
+    <select id="filter-status" class="status-select" onchange="renderCandidates()">
+      <option value="">All statuses</option>
+      <option>Applied</option>
+      <option>Screening</option>
+      <option>Interview</option>
+      <option>Offer</option>
+      <option>Hired</option>
+      <option>Rejected</option>
+    </select>
+  </div>
+
+  <div class="table-wrap">
+    <table id="candidates-table">
+      <thead>
+        <tr>
+          <th>Candidate</th>
+          <th>Contact</th>
+          <th>Role applied</th>
+          <th>Experience</th>
+          <th>Skills</th>
+          <th>Registered</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="candidates-tbody"></tbody>
+    </table>
+    <div class="empty-state" id="candidates-empty" style="display:none;">
+      <h3>No candidates yet</h3>
+      <p>Register from the public site's "Candidates" section, or add one manually.</p>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="add-candidate-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAddCandidateModal()" aria-label="Close">×</button>
+    <h3>Add a candidate</h3>
+    <p>For walk-ins or referrals collected offline.</p>
+    <form id="add-candidate-form">
+      <div class="field"><label>Full name</label><input name="name" type="text" required></div>
+      <div class="field"><label>Phone number</label><input name="phone" type="tel" required></div>
+      <div class="field"><label>Email</label><input name="email" type="email"></div>
+      <div class="field"><label>Role applied for</label><input name="roleApplied" type="text" required></div>
+      <div class="field"><label>Years of experience</label><input name="experience" type="text"></div>
+      <div class="field"><label>Key skills</label><textarea name="skills"></textarea></div>
+      <button type="submit" class="btn btn-primary btn-block">Save candidate</button>
+    </form>
+  </div>
+</div>
+
+<script src="Script.js"></script>
+<script>
+  function fmtDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) + ' · ' +
+           d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function badgeClass(status) {
+    return {
+      'Applied': 'badge-new', 'Screening': 'badge-screening', 'Interview': 'badge-interview',
+      'Offer': 'badge-progress', 'Hired': 'badge-hired', 'Rejected': 'badge-rejected'
+    }[status] || 'badge-new';
+  }
+
+  function renderStats() {
+    const list = Store.getCandidates();
+    const counts = { total: list.length };
+    list.forEach(c => { counts[c.status] = (counts[c.status] || 0) + 1; });
+    document.getElementById('stat-row').innerHTML = `
+      <div class="stat-card"><div class="num">${counts.total}</div><div class="lbl">Total candidates</div></div>
+      <div class="stat-card"><div class="num">${counts.Applied || 0}</div><div class="lbl">Applied</div></div>
+      <div class="stat-card"><div class="num">${(counts.Screening||0)+(counts.Interview||0)}</div><div class="lbl">In process</div></div>
+      <div class="stat-card"><div class="num">${counts.Hired || 0}</div><div class="lbl">Hired</div></div>
+    `;
+  }
+
+  function renderCandidates() {
+    renderStats();
+    const search = document.getElementById('search-input').value.toLowerCase();
+    const statusFilter = document.getElementById('filter-status').value;
+    let list = Store.getCandidates();
+    if (search) {
+      list = list.filter(c =>
+        (c.name || '').toLowerCase().includes(search) ||
+        (c.roleApplied || '').toLowerCase().includes(search) ||
+        (c.skills || '').toLowerCase().includes(search)
+      );
+    }
+    if (statusFilter) list = list.filter(c => c.status === statusFilter);
+
+    const tbody = document.getElementById('candidates-tbody');
+    const empty = document.getElementById('candidates-empty');
+    if (!list.length) {
+      tbody.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+
+    tbody.innerHTML = list.map(c => `
+      <tr>
+        <td><strong>${escapeHtml(c.name || '-')}</strong></td>
+        <td>${escapeHtml(c.phone || '-')}<br><span style="color:var(--slate-soft);font-size:12px;">${escapeHtml(c.email || '')}</span></td>
+        <td>${escapeHtml(c.roleApplied || '-')}</td>
+        <td>${escapeHtml(c.experience || '-')}</td>
+        <td style="max-width:220px;">${escapeHtml(c.skills || '-')}</td>
+        <td>${fmtDate(c.createdAt)}</td>
+        <td>
+          <select class="status-select" onchange="Store.updateCandidateStatus('${c.id}', this.value); renderCandidates();">
+            ${['Applied','Screening','Interview','Offer','Hired','Rejected'].map(s => `<option ${s===c.status?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </td>
+        <td class="row-actions">
+          <button onclick="if(confirm('Delete this candidate?')){Store.deleteCandidate('${c.id}'); renderCandidates();}">Delete</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function openAddCandidateModal() { document.getElementById('add-candidate-modal').classList.add('open'); }
+  function closeAddCandidateModal() { document.getElementById('add-candidate-modal').classList.remove('open'); }
+
+  document.getElementById('add-candidate-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = e.target;
+    Store.addCandidate({
+      name: f.name.value.trim(),
+      phone: f.phone.value.trim(),
+      email: f.email.value.trim(),
+      roleApplied: f.roleApplied.value.trim(),
+      experience: f.experience.value.trim(),
+      skills: f.skills.value.trim()
+    });
+    f.reset();
+    closeAddCandidateModal();
+    renderCandidates();
+  });
+
+  renderCandidates();
+</script>
+</body>
+</html>

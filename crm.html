@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM — Employer Leads | TalentBridge</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="dash-body">
+
+<header class="dash-top">
+  <div class="container dash-top-inner">
+    <a href="index.html" class="brand"><span class="brand-mark">TB</span>Talent<span>Bridge</span></a>
+    <nav class="dash-nav">
+      <a href="crm.html" class="active">CRM · Leads</a>
+      <a href="hrm.html">HRM · Candidates</a>
+      <a href="index.html">← Public site</a>
+    </nav>
+  </div>
+</header>
+
+<div class="dash-wrap">
+  <div class="dash-head">
+    <div>
+      <h1>Employer leads</h1>
+      <p>Every requirement submitted from the website, plus Call Now / WhatsApp clicks, lands here automatically.</p>
+    </div>
+    <button class="btn btn-primary" onclick="openAddLeadModal()">+ Add lead manually</button>
+  </div>
+
+  <div class="stat-row" id="stat-row"></div>
+
+  <div class="toolbar">
+    <input type="search" id="search-input" placeholder="Search by company, contact or role…" oninput="renderLeads()">
+    <select id="filter-status" class="status-select" onchange="renderLeads()">
+      <option value="">All statuses</option>
+      <option>New</option>
+      <option>Contacted</option>
+      <option>Qualified</option>
+      <option>Won</option>
+      <option>Lost</option>
+    </select>
+  </div>
+
+  <div class="table-wrap">
+    <table id="leads-table">
+      <thead>
+        <tr>
+          <th>Company</th>
+          <th>Contact</th>
+          <th>Role</th>
+          <th>Openings</th>
+          <th>Channel</th>
+          <th>Received</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="leads-tbody"></tbody>
+    </table>
+    <div class="empty-state" id="leads-empty" style="display:none;">
+      <h3>No leads yet</h3>
+      <p>Submit the "Post a requirement" form on the public site, or add one manually.</p>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="add-lead-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAddLeadModal()" aria-label="Close">×</button>
+    <h3>Add a lead</h3>
+    <p>For leads that come in by phone or in person.</p>
+    <form id="add-lead-form">
+      <div class="field"><label>Company name</label><input name="company" type="text" required></div>
+      <div class="field"><label>Contact person</label><input name="contact" type="text"></div>
+      <div class="field"><label>Email</label><input name="email" type="email"></div>
+      <div class="field"><label>Role</label><input name="role" type="text" required></div>
+      <div class="field"><label>Number of openings</label><input name="openings" type="text"></div>
+      <div class="field"><label>Notes</label><textarea name="message"></textarea></div>
+      <button type="submit" class="btn btn-primary btn-block">Save lead</button>
+    </form>
+  </div>
+</div>
+
+<script src="Script.js"></script>
+<script>
+  function fmtDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) + ' · ' +
+           d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function badgeClass(status) {
+    return {
+      'New': 'badge-new', 'Contacted': 'badge-progress',
+      'Qualified': 'badge-progress', 'Won': 'badge-won', 'Lost': 'badge-lost'
+    }[status] || 'badge-new';
+  }
+
+  function renderStats() {
+    const leads = Store.getLeads();
+    const counts = { total: leads.length, New: 0, Contacted: 0, Qualified: 0, Won: 0, Lost: 0 };
+    leads.forEach(l => { counts[l.status] = (counts[l.status] || 0) + 1; });
+    const inProgress = (counts.Contacted || 0) + (counts.Qualified || 0);
+    document.getElementById('stat-row').innerHTML = `
+      <div class="stat-card"><div class="num">${counts.total}</div><div class="lbl">Total leads</div></div>
+      <div class="stat-card"><div class="num">${counts.New || 0}</div><div class="lbl">New</div></div>
+      <div class="stat-card"><div class="num">${inProgress}</div><div class="lbl">In progress</div></div>
+      <div class="stat-card"><div class="num">${counts.Won || 0}</div><div class="lbl">Won</div></div>
+    `;
+  }
+
+  function renderLeads() {
+    renderStats();
+    const search = document.getElementById('search-input').value.toLowerCase();
+    const statusFilter = document.getElementById('filter-status').value;
+    let leads = Store.getLeads();
+    if (search) {
+      leads = leads.filter(l =>
+        (l.company || '').toLowerCase().includes(search) ||
+        (l.contact || '').toLowerCase().includes(search) ||
+        (l.role || '').toLowerCase().includes(search)
+      );
+    }
+    if (statusFilter) leads = leads.filter(l => l.status === statusFilter);
+
+    const tbody = document.getElementById('leads-tbody');
+    const empty = document.getElementById('leads-empty');
+    if (!leads.length) {
+      tbody.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+
+    tbody.innerHTML = leads.map(l => `
+      <tr>
+        <td><strong>${escapeHtml(l.company || '-')}</strong></td>
+        <td>${escapeHtml(l.contact || '-')}<br><span style="color:var(--slate-soft);font-size:12px;">${escapeHtml(l.email || '')}</span></td>
+        <td>${escapeHtml(l.role || '-')}</td>
+        <td>${escapeHtml(l.openings || '-')}</td>
+        <td><span class="badge ${l.channel === 'Call' ? 'badge-progress' : l.channel === 'WhatsApp' ? 'badge-won' : 'badge-new'}">${escapeHtml(l.channel || 'Web form')}</span></td>
+        <td>${fmtDate(l.createdAt)}</td>
+        <td>
+          <select class="status-select" onchange="Store.updateLeadStatus('${l.id}', this.value); renderLeads();">
+            ${['New','Contacted','Qualified','Won','Lost'].map(s => `<option ${s===l.status?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </td>
+        <td class="row-actions">
+          <button onclick="if(confirm('Delete this lead?')){Store.deleteLead('${l.id}'); renderLeads();}">Delete</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function openAddLeadModal() { document.getElementById('add-lead-modal').classList.add('open'); }
+  function closeAddLeadModal() { document.getElementById('add-lead-modal').classList.remove('open'); }
+
+  document.getElementById('add-lead-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = e.target;
+    Store.addLead({
+      company: f.company.value.trim(),
+      contact: f.contact.value.trim(),
+      email: f.email.value.trim(),
+      role: f.role.value.trim(),
+      openings: f.openings.value.trim(),
+      message: f.message.value.trim(),
+      channel: 'Manual'
+    });
+    f.reset();
+    closeAddLeadModal();
+    renderLeads();
+  });
+
+  renderLeads();
+</script>
+</body>
+</html>

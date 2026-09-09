@@ -1,0 +1,5 @@
+﻿node_modules/
+.env
+.env.*
+ngrok.exe
+npm-debug.log*

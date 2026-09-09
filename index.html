@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TalentBridge — Pan-India Staffing & Recruitment Partner</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ================= NAV ================= -->
+<header class="nav">
+  <div class="container nav-inner">
+    <a href="#top" class="brand"><span class="brand-mark">TB</span>Talent<span>Bridge</span></a>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="#services">Services</a></li>
+        <li><a href="#industries">Industries</a></li>
+        <li><a href="#jobs">Jobs</a></li>
+        <li><a href="#employers">Employers</a></li>
+        <li><a href="#candidates">Candidates</a></li>
+      </ul>
+    </nav>
+    <div class="nav-cta">
+      <a href="crm.html" class="internal-link">Team login →</a>
+      <button class="btn btn-ghost-light" onclick="callNow('nav')">Call Now</button>
+    </div>
+    <button class="nav-toggle" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
+  </div>
+</header>
+
+<!-- ================= HERO ================= -->
+<section class="hero" id="top">
+  <div class="container hero-grid">
+    <div>
+      <span class="eyebrow">Pan-India recruitment partner</span>
+      <h1>Hire verified talent in 48 hours, not 6 weeks.</h1>
+      <p class="hero-lede">TalentBridge handles sourcing, screening and compliance for blue-collar, sales and IT roles — so your team can stay focused on running the business.</p>
+      <div class="hero-cta-row">
+        <button class="btn btn-primary" onclick="document.getElementById('employers').scrollIntoView({behavior:'smooth'})">Post a requirement</button>
+        <button class="btn btn-call" onclick="callNow('hero')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z"/></svg>
+          Call Now
+        </button>
+        <button class="btn btn-whatsapp" onclick="openWhatsApp('hero')">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.5 0-10 4.5-10 10 0 1.77.46 3.45 1.27 4.9L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.5 0 10-4.5 10-10s-4.5-10-10.01-10Zm0 18.13a8.1 8.1 0 0 1-4.14-1.13l-.3-.18-3.11.82.83-3.03-.2-.31a8.12 8.12 0 1 1 6.92 3.83Zm4.44-6.09c-.24-.12-1.44-.71-1.66-.79-.22-.08-.39-.12-.55.12-.16.24-.63.79-.78.95-.14.16-.29.18-.53.06-.24-.12-1.02-.38-1.94-1.2-.72-.64-1.2-1.43-1.35-1.67-.14-.24-.02-.37.11-.49.11-.11.24-.29.36-.43.12-.14.16-.24.24-.4.08-.16.04-.31-.02-.43-.06-.12-.55-1.32-.75-1.81-.2-.48-.4-.41-.55-.42-.14-.01-.31-.01-.47-.01-.16 0-.43.06-.65.31-.22.24-.86.84-.86 2.04 0 1.2.88 2.36 1 2.52.12.16 1.73 2.64 4.2 3.7.59.25 1.05.4 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.44-.59 1.64-1.16.2-.57.2-1.06.14-1.16-.06-.1-.22-.16-.46-.28Z"/></svg>
+          WhatsApp
+        </button>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat"><b>48 hrs</b><span>Avg. shortlist time</span></div>
+        <div class="hero-stat"><b>3,200+</b><span>Roles filled</span></div>
+        <div class="hero-stat"><b>19</b><span>Cities covered</span></div>
+        <div class="hero-stat"><b>92%</b><span>90-day retention</span></div>
+      </div>
+    </div>
+
+    <div class="quote-panel">
+      <h3>Post a requirement</h3>
+      <div class="sub">A recruiter responds within one business day.</div>
+      <form id="employer-form">
+        <div class="field">
+          <label for="company">Company name</label>
+          <input id="company" name="company" type="text" placeholder="Acme Manufacturing Pvt Ltd" required>
+        </div>
+        <div class="field">
+          <label for="email">Work email</label>
+          <input id="email" name="email" type="email" placeholder="name@company.com" required>
+        </div>
+        <div class="field">
+          <label for="contact">Your name</label>
+          <input id="contact" name="contact" type="text" placeholder="Full name">
+        </div>
+        <div class="field">
+          <label for="role">Job title / role</label>
+          <input id="role" name="role" type="text" placeholder="e.g. Warehouse Supervisor" required>
+        </div>
+        <div class="field">
+          <label for="openings">Number of openings</label>
+          <input id="openings" name="openings" type="text" placeholder="e.g. 5">
+        </div>
+        <div class="field">
+          <label for="message">Message</label>
+          <textarea id="message" name="message" placeholder="Tell us about the role, location and timeline"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Send requirement</button>
+      </form>
+      <div class="form-note">Submissions land in your team's CRM instantly.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= TRUST BAR ================= -->
+<div class="trust-bar">
+  <div class="container trust-row">
+    <div class="trust-item">✓ 100% verified candidates</div>
+    <div class="trust-item">✓ Dedicated account manager</div>
+    <div class="trust-item">✓ Transparent weekly reporting</div>
+    <div class="trust-item">✓ Replacement guarantee</div>
+  </div>
+</div>
+
+<!-- ================= SERVICES ================= -->
+<section class="section" id="services">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Services</span>
+      <h2>One partner for every stage of hiring</h2>
+      <p>From a single urgent vacancy to a 200-person bulk hiring drive, pick the model that fits.</p>
+    </div>
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <h3>Permanent staffing</h3>
+        <p>End-to-end hiring for full-time roles, from JD to offer roll-out, with a 90-day replacement guarantee.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+        <h3>Temporary & contract staffing</h3>
+        <p>Scale your workforce up or down for seasonal demand, with payroll and statutory compliance handled for you.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v6"/><path d="M15 21l6-6M15 15h6v6"/></svg></div>
+        <h3>Executive search</h3>
+        <p>Confidential, retained search for leadership and specialist mandates across functions.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+        <h3>Payroll & compliance</h3>
+        <p>PF, ESI, gratuity and labour-law compliance managed for your contract workforce, audited monthly.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 21l-4.35-4.35"/><circle cx="11" cy="11" r="7"/></svg></div>
+        <h3>RPO</h3>
+        <p>Embed a TalentBridge recruiter inside your team to run high-volume hiring at your standards, at scale.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9Z"/></svg></div>
+        <h3>Background verification</h3>
+        <p>Identity, address, employment and criminal-record checks completed before day one.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= INDUSTRIES ================= -->
+<section class="section section-alt" id="industries">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Industries</span>
+      <h2>Recruiters who already know your shop floor</h2>
+      <p>Sector-specialist teams, not generalists reading a job description for the first time.</p>
+    </div>
+    <div class="chip-grid">
+      <span class="chip">Manufacturing</span>
+      <span class="chip">Logistics & warehousing</span>
+      <span class="chip">Retail & e-commerce</span>
+      <span class="chip">IT & software</span>
+      <span class="chip">BFSI</span>
+      <span class="chip">Healthcare</span>
+      <span class="chip">Hospitality</span>
+      <span class="chip">Construction & infra</span>
+      <span class="chip">BPO / ITES</span>
+      <span class="chip">FMCG</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================= HOW IT WORKS ================= -->
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Process</span>
+      <h2>How a requirement becomes a hire</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h4>Share the role</h4>
+        <p>Post a requirement online, over WhatsApp, or on a call — takes under two minutes.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h4>We source & screen</h4>
+        <p>Our recruiters match candidates from our verified database and run first-round screening.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h4>You interview</h4>
+        <p>Receive a shortlist within 48 hours and interview only pre-vetted candidates.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <h4>Onboard with support</h4>
+        <p>We handle offer rollout, documentation and statutory onboarding on your behalf.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= EMPLOYERS ================= -->
+<section class="section section-alt" id="employers">
+  <div class="container split">
+    <div>
+      <span class="eyebrow">For employers</span>
+      <h2>Built for teams that can't afford a slow hire</h2>
+      <ul class="check-list">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Shortlists in 48 hours</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> 100% verified candidates</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Pan-India recruitment network</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Dedicated account manager</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Transparent weekly reporting</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Replacement guarantee</li>
+      </ul>
+      <div class="urgent-box">
+        <h4>Need urgent hiring support?</h4>
+        <p>Talk to a recruitment expert directly.</p>
+        <div class="urgent-actions">
+          <button class="btn btn-whatsapp" onclick="openWhatsApp('employers-urgent')">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.5 0-10 4.5-10 10 0 1.77.46 3.45 1.27 4.9L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.5 0 10-4.5 10-10s-4.5-10-10.01-10Zm0 18.13a8.1 8.1 0 0 1-4.14-1.13l-.3-.18-3.11.82.83-3.03-.2-.31a8.12 8.12 0 1 1 6.92 3.83Zm4.44-6.09c-.24-.12-1.44-.71-1.66-.79-.22-.08-.39-.12-.55.12-.16.24-.63.79-.78.95-.14.16-.29.18-.53.06-.24-.12-1.02-.38-1.94-1.2-.72-.64-1.2-1.43-1.35-1.67-.14-.24-.02-.37.11-.49.11-.11.24-.29.36-.43.12-.14.16-.24.24-.4.08-.16.04-.31-.02-.43-.06-.12-.55-1.32-.75-1.81-.2-.48-.4-.41-.55-.42-.14-.01-.31-.01-.47-.01-.16 0-.43.06-.65.31-.22.24-.86.84-.86 2.04 0 1.2.88 2.36 1 2.52.12.16 1.73 2.64 4.2 3.7.59.25 1.05.4 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.44-.59 1.64-1.16.2-.57.2-1.06.14-1.16-.06-.1-.22-.16-.46-.28Z"/></svg>
+            WhatsApp
+          </button>
+          <button class="btn btn-ghost" onclick="callNow('employers-urgent')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z"/></svg>
+            Call Now
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3 style="font-size:19px; margin-bottom:4px;">Request a detailed proposal</h3>
+      <p style="font-size:13.5px; margin-bottom:20px;">Same form as above — use this one if you scrolled past the hero.</p>
+      <form onsubmit="handleEmployerForm(event)" id="employer-form-2">
+        <div class="two-col">
+          <div class="field"><label>Company name</label><input name="company" type="text" required></div>
+          <div class="field"><label>Work email</label><input name="email" type="email" required></div>
+        </div>
+        <div class="two-col">
+          <div class="field"><label>Job title / role</label><input name="role" type="text" required></div>
+          <div class="field"><label>Number of openings</label><input name="openings" type="text"></div>
+        </div>
+        <div class="field"><label>Your name</label><input name="contact" type="text"></div>
+        <div class="field"><label>Message</label><textarea name="message"></textarea></div>
+        <button type="submit" class="btn btn-primary btn-block">Send requirement</button>
+      </form>
+    </div>
+  </div>
+</section>
+<script>document.getElementById('employer-form-2').addEventListener('submit', handleEmployerForm);</script>
+
+<!-- ================= JOBS ================= -->
+<section class="section" id="jobs">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Open roles</span>
+      <h2>Live openings across our client network</h2>
+    </div>
+    <div id="jobs-list"></div>
+  </div>
+</section>
+
+<!-- ================= CANDIDATES ================= -->
+<section class="section section-ink" id="candidates">
+  <div class="container split">
+    <div>
+      <span class="eyebrow">For candidates</span>
+      <h2>Register once, get matched to roles that fit</h2>
+      <p>No fees, ever. Add your details and our recruiters will reach out when a matching role opens up, even if nothing here fits today.</p>
+      <ul class="check-list" style="color:#fff;">
+        <li style="color:#fff;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Free for job seekers, always</li>
+        <li style="color:#fff;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Interview prep support</li>
+        <li style="color:#fff;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg> Status updates over WhatsApp</li>
+      </ul>
+    </div>
+    <div class="panel" style="background:#fff;">
+      <h3 style="font-size:19px; margin-bottom:4px; color:var(--ink);">Register as a candidate</h3>
+      <p style="font-size:13.5px; margin-bottom:20px;">Takes about a minute.</p>
+      <form id="candidate-form">
+        <div class="two-col">
+          <div class="field"><label>Full name</label><input name="name" type="text" required></div>
+          <div class="field"><label>Phone number</label><input name="phone" type="tel" required></div>
+        </div>
+        <div class="field"><label>Email</label><input name="email" type="email"></div>
+        <div class="two-col">
+          <div class="field"><label>Role you want</label><input name="roleApplied" type="text" placeholder="e.g. Sales Executive" required></div>
+          <div class="field"><label>Years of experience</label><input name="experience" type="text" placeholder="e.g. 2"></div>
+        </div>
+        <div class="field"><label>Key skills</label><textarea name="skills" placeholder="e.g. Excel, Tally, forklift license"></textarea></div>
+        <button type="submit" class="btn btn-primary btn-block">Submit my profile</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <a href="#top" class="brand" style="margin-bottom:14px; display:inline-flex;"><span class="brand-mark">TB</span>Talent<span>Bridge</span></a>
+        <p style="max-width:34ch;">Pan-India staffing and recruitment for manufacturing, retail, sales, IT and BFSI employers.</p>
+      </div>
+      <div>
+        <h5>Company</h5>
+        <ul><li><a href="#services">Services</a></li><li><a href="#industries">Industries</a></li><li><a href="#jobs">Jobs</a></li></ul>
+      </div>
+      <div>
+        <h5>Get in touch</h5>
+        <ul>
+          <li><a href="tel:+919999999999">+91 99999 99999</a></li>
+          <li><a href="mailto:hello@talentbridge.example">hello@talentbridge.example</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Internal tools</h5>
+        <ul><li><a href="crm.html">CRM (employer leads)</a></li><li><a href="hrm.html">HRM (candidates)</a></li></ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 TalentBridge. Prototype for demonstration.</span>
+      <span>Made with HTML, CSS & JS</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ================= APPLY MODAL ================= -->
+<div class="modal-backdrop" id="apply-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeApplyModal()" aria-label="Close">×</button>
+    <h3>Apply for <span id="apply-job-title"></span></h3>
+    <p>Share your details and a recruiter will call you back.</p>
+    <form id="modal-candidate-form">
+      <input type="hidden" id="modal-role-field" name="roleApplied">
+      <div class="field"><label>Full name</label><input name="name" type="text" required></div>
+      <div class="field"><label>Phone number</label><input name="phone" type="tel" required></div>
+      <div class="field"><label>Email</label><input name="email" type="email"></div>
+      <div class="field"><label>Years of experience</label><input name="experience" type="text"></div>
+      <div class="field"><label>Key skills</label><textarea name="skills"></textarea></div>
+      <div class="modal-actions">
+        <button type="submit" class="btn btn-primary btn-block">Submit application</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="Script.js"></script>
+</body>
+</html>
