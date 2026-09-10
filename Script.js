@@ -23,7 +23,7 @@ const Store = {
   getLeads() { return this._read(this.LEADS_KEY); },
   addLead(lead) {
     const leads = this.getLeads();
-    lead.id = 'L' + Date.now();
+    lead.id = 'L' + Date.now() + Math.random().toString(36).slice(2, 6);
     lead.createdAt = new Date().toISOString();
     lead.status = lead.status || 'New';
     leads.unshift(lead);
@@ -41,7 +41,7 @@ const Store = {
   getCandidates() { return this._read(this.CANDIDATES_KEY); },
   addCandidate(c) {
     const list = this.getCandidates();
-    c.id = 'C' + Date.now();
+    c.id = 'C' + Date.now() + Math.random().toString(36).slice(2, 6);
     c.createdAt = new Date().toISOString();
     c.status = c.status || 'Applied';
     list.unshift(c);
@@ -72,6 +72,44 @@ function showToast(message, duration = 3200) {
   toast._timer = setTimeout(() => toast.classList.remove('show'), duration);
 }
 
+/* ---------------- Call service (used by CRM "Call" button) ----------------
+   Places a real click-to-call to a KNOWN number (e.g. a lead saved in the
+   CRM or imported from Excel), without showing the "enter your number"
+   popup used on the public site. Your phone (OWNER_PHONE_NUMBER) always
+   rings first either way — this just skips straight to dialing since the
+   number is already known. */
+const CallService = {
+  /* Direct dial: opens YOUR phone's own dialer with the lead's number and
+     calls them straight away. Use this when you're using the CRM on your
+     own phone and want to call a lead directly — no Twilio, no server,
+     no ngrok required. Only works on a mobile browser (a computer has no
+     phone line to dial from). */
+  dialDirect(phoneNumber, label = '') {
+    showToast(`Dialling ${label || phoneNumber}…`);
+    window.location.href = `tel:${phoneNumber}`;
+  },
+
+  /* Twilio bridge: rings YOU first via Twilio, then connects you to the
+     lead once you answer. Use this when the CRM is on a computer (no
+     dialer available), or when you want the call to go through Twilio's
+     number instead of your own SIM. Requires server.js + Twilio set up. */
+  async placeCall(phoneNumber, label = '') {
+    showToast(`Calling ${label || phoneNumber} — your phone will ring first…`);
+    try {
+      const res = await fetch('/api/click-to-call', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phoneNumber })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Request failed');
+      showToast('Connected! Twilio is dialing now — answer your phone.');
+    } catch (err) {
+      showToast("Couldn't place the call. Check that server.js is running with valid Twilio credentials.");
+    }
+  }
+};
+
 /* ---------------- Call & WhatsApp ----------------
    Two modes are supported:
 
@@ -88,7 +126,7 @@ function showToast(message, duration = 3200) {
       place phone calls directly. */
 const AGENCY_PHONE = '+919999999999';   // <-- replace with your real number
 const AGENCY_WHATSAPP = '919999999999'; // <-- digits only, country code, no +
-const USE_REAL_CLICK_TO_CALL = true;   // <-- set true once server.js is deployed and running
+const USE_REAL_CLICK_TO_CALL = false;   // <-- set true once server.js is deployed and running
 
 function callNow(source = 'unknown') {
   if (USE_REAL_CLICK_TO_CALL) {
@@ -140,6 +178,7 @@ async function submitClickToCall(phone, source) {
   Store.addLead({
     company: '(Callback request)',
     contact: phone,
+    phone: phone,
     email: '-',
     role: '-',
     openings: '-',
