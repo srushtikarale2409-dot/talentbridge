@@ -5,6 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CRM — Employer Leads | TalentBridge</title>
 <link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  .call-queue-panel{
+    position:fixed; right:24px; bottom:24px; width:320px;
+    background:var(--white); border:1px solid var(--line); border-radius:var(--radius-md);
+    box-shadow:0 20px 50px rgba(0,0,0,.25); padding:20px; z-index:400; display:none;
+  }
+  .call-queue-panel.open{display:block;}
+  .call-queue-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;}
+  .call-queue-head h4{margin:0; font-size:15px;}
+  .call-queue-progress{font-size:12px; color:var(--slate-soft); margin-bottom:14px;}
+  .call-queue-current{background:var(--paper-dim); border-radius:var(--radius-sm); padding:14px; margin-bottom:14px;}
+  .call-queue-current .name{font-weight:600; font-size:15px; margin-bottom:2px;}
+  .call-queue-current .phone{font-size:13px; color:var(--slate-soft);}
+  .call-queue-actions{display:flex; gap:8px;}
+  .call-queue-actions .btn{flex:1; padding:10px; font-size:13.5px;}
+  .call-queue-close{background:none; border:none; color:var(--slate-soft); font-size:18px; cursor:pointer; line-height:1;}
+  .lead-check{width:16px; height:16px; cursor:pointer;}
+  .bulk-bar{
+    display:none; align-items:center; justify-content:space-between; gap:12px;
+    background:var(--ink); color:var(--white); border-radius:var(--radius-sm);
+    padding:10px 16px; margin-bottom:14px; font-size:14px;
+  }
+  .bulk-bar.show{display:flex;}
+  .bulk-bar button{background:var(--orange); color:var(--white); border:none; border-radius:6px; padding:7px 16px; font-weight:600; font-size:13px;}
+  .bulk-bar .clear-link{background:none; color:#B8C0D4; font-size:13px; padding:0;}
+</style>
 </head>
 <body class="dash-body">
 
@@ -25,10 +52,21 @@
       <h1>Employer leads</h1>
       <p>Every requirement submitted from the website, plus Call Now / WhatsApp clicks, lands here automatically.</p>
     </div>
-    <button class="btn btn-primary" onclick="openAddLeadModal()">+ Add lead manually</button>
+    <div style="display:flex; gap:10px;">
+      <button class="btn btn-ghost" onclick="openImportModal()">Import from Excel</button>
+      <button class="btn btn-primary" onclick="openAddLeadModal()">+ Add lead manually</button>
+    </div>
   </div>
 
   <div class="stat-row" id="stat-row"></div>
+
+  <div class="bulk-bar" id="bulk-bar">
+    <span><strong id="bulk-count">0</strong> selected</span>
+    <div style="display:flex; align-items:center; gap:14px;">
+      <button onclick="openCallQueue()">Call selected</button>
+      <button class="clear-link" onclick="clearSelection()">Clear</button>
+    </div>
+  </div>
 
   <div class="toolbar">
     <input type="search" id="search-input" placeholder="Search by company, contact or role…" oninput="renderLeads()">
@@ -46,8 +84,10 @@
     <table id="leads-table">
       <thead>
         <tr>
+          <th style="width:36px;"><input type="checkbox" class="lead-check" id="select-all-check" onchange="toggleSelectAll(this.checked)"></th>
           <th>Company</th>
           <th>Contact</th>
+          <th>Phone</th>
           <th>Role</th>
           <th>Openings</th>
           <th>Channel</th>
@@ -60,11 +100,12 @@
     </table>
     <div class="empty-state" id="leads-empty" style="display:none;">
       <h3>No leads yet</h3>
-      <p>Submit the "Post a requirement" form on the public site, or add one manually.</p>
+      <p>Submit the "Post a requirement" form on the public site, import an Excel sheet, or add one manually.</p>
     </div>
   </div>
 </div>
 
+<!-- Add lead modal -->
 <div class="modal-backdrop" id="add-lead-modal">
   <div class="modal">
     <button class="modal-close" onclick="closeAddLeadModal()" aria-label="Close">×</button>
@@ -73,6 +114,7 @@
     <form id="add-lead-form">
       <div class="field"><label>Company name</label><input name="company" type="text" required></div>
       <div class="field"><label>Contact person</label><input name="contact" type="text"></div>
+      <div class="field"><label>Phone number</label><input name="phone" type="tel" placeholder="+91XXXXXXXXXX"></div>
       <div class="field"><label>Email</label><input name="email" type="email"></div>
       <div class="field"><label>Role</label><input name="role" type="text" required></div>
       <div class="field"><label>Number of openings</label><input name="openings" type="text"></div>
@@ -82,7 +124,49 @@
   </div>
 </div>
 
-<script src="Script.js"></script>
+<!-- Import from Excel modal -->
+<div class="modal-backdrop" id="import-modal">
+  <div class="modal" style="max-width:560px;">
+    <button class="modal-close" onclick="closeImportModal()" aria-label="Close">×</button>
+    <h3>Import leads from Excel</h3>
+    <p>Upload your .xlsx or .csv file, confirm which column is which, then import.</p>
+
+    <div id="import-step-upload">
+      <div class="field">
+        <label>Excel or CSV file</label>
+        <input type="file" id="import-file-input" accept=".xlsx,.xls,.csv" onchange="handleImportFile(event)">
+      </div>
+      <p id="import-status" style="font-size:13px; color:var(--slate-soft);"></p>
+    </div>
+
+    <div id="import-step-mapping" style="display:none;">
+      <p style="font-size:13px; margin-bottom:14px;">Found <strong id="import-row-count">0</strong> rows. Match your spreadsheet columns below (only Phone is required):</p>
+      <div id="import-mapping-fields"></div>
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <button class="btn btn-ghost" onclick="resetImportModal()" style="flex:1;">Start over</button>
+        <button class="btn btn-primary" onclick="confirmImport()" style="flex:1;">Import leads</button>
+      </div>
+    </div>
+
+    <div id="import-step-done" style="display:none; text-align:center; padding:12px 0;">
+      <h3 id="import-done-message" style="margin-bottom:6px;"></h3>
+      <button class="btn btn-primary btn-block" onclick="closeImportModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Call queue floating panel -->
+<div class="call-queue-panel" id="call-queue-panel">
+  <div class="call-queue-head">
+    <h4>Call queue</h4>
+    <button class="call-queue-close" onclick="closeQueue()" aria-label="Close queue">×</button>
+  </div>
+  <div class="call-queue-progress" id="queue-progress"></div>
+  <div class="call-queue-current" id="queue-current"></div>
+  <div class="call-queue-actions" id="queue-actions"></div>
+</div>
+
+<script src="script.js"></script>
 <script>
   function fmtDate(iso) {
     const d = new Date(iso);
@@ -110,8 +194,34 @@
     `;
   }
 
-  function renderLeads() {
-    renderStats();
+  /* ---------------- Selection state (for call queue) ---------------- */
+  let selectedLeadIds = new Set();
+
+  function toggleLeadSelect(id, checked) {
+    if (checked) selectedLeadIds.add(id); else selectedLeadIds.delete(id);
+    updateBulkBar();
+  }
+
+  function toggleSelectAll(checked) {
+    const visibleIds = getVisibleLeads().map(l => l.id);
+    if (checked) visibleIds.forEach(id => selectedLeadIds.add(id));
+    else visibleIds.forEach(id => selectedLeadIds.delete(id));
+    renderLeads();
+  }
+
+  function clearSelection() {
+    selectedLeadIds.clear();
+    renderLeads();
+  }
+
+  function updateBulkBar() {
+    const bar = document.getElementById('bulk-bar');
+    const count = selectedLeadIds.size;
+    document.getElementById('bulk-count').textContent = count;
+    bar.classList.toggle('show', count > 0);
+  }
+
+  function getVisibleLeads() {
     const search = document.getElementById('search-input').value.toLowerCase();
     const statusFilter = document.getElementById('filter-status').value;
     let leads = Store.getLeads();
@@ -119,24 +229,34 @@
       leads = leads.filter(l =>
         (l.company || '').toLowerCase().includes(search) ||
         (l.contact || '').toLowerCase().includes(search) ||
-        (l.role || '').toLowerCase().includes(search)
+        (l.role || '').toLowerCase().includes(search) ||
+        (l.phone || '').toLowerCase().includes(search)
       );
     }
     if (statusFilter) leads = leads.filter(l => l.status === statusFilter);
+    return leads;
+  }
+
+  function renderLeads() {
+    renderStats();
+    const leads = getVisibleLeads();
 
     const tbody = document.getElementById('leads-tbody');
     const empty = document.getElementById('leads-empty');
     if (!leads.length) {
       tbody.innerHTML = '';
       empty.style.display = 'block';
+      updateBulkBar();
       return;
     }
     empty.style.display = 'none';
 
     tbody.innerHTML = leads.map(l => `
       <tr>
+        <td>${l.phone ? `<input type="checkbox" class="lead-check" ${selectedLeadIds.has(l.id) ? 'checked' : ''} onchange="toggleLeadSelect('${l.id}', this.checked)">` : ''}</td>
         <td><strong>${escapeHtml(l.company || '-')}</strong></td>
         <td>${escapeHtml(l.contact || '-')}<br><span style="color:var(--slate-soft);font-size:12px;">${escapeHtml(l.email || '')}</span></td>
+        <td>${escapeHtml(l.phone || '-')}</td>
         <td>${escapeHtml(l.role || '-')}</td>
         <td>${escapeHtml(l.openings || '-')}</td>
         <td><span class="badge ${l.channel === 'Call' ? 'badge-progress' : l.channel === 'WhatsApp' ? 'badge-won' : 'badge-new'}">${escapeHtml(l.channel || 'Web form')}</span></td>
@@ -147,10 +267,12 @@
           </select>
         </td>
         <td class="row-actions">
-          <button onclick="if(confirm('Delete this lead?')){Store.deleteLead('${l.id}'); renderLeads();}">Delete</button>
+          ${l.phone ? `<button onclick="callLead('${l.id}')" style="color:var(--green);font-weight:600;">Call</button>` : ''}
+          <button onclick="if(confirm('Delete this lead?')){Store.deleteLead('${l.id}'); selectedLeadIds.delete('${l.id}'); renderLeads();}">Delete</button>
         </td>
       </tr>
     `).join('');
+    updateBulkBar();
   }
 
   function escapeHtml(str) {
@@ -168,6 +290,7 @@
     Store.addLead({
       company: f.company.value.trim(),
       contact: f.contact.value.trim(),
+      phone: f.phone.value.trim(),
       email: f.email.value.trim(),
       role: f.role.value.trim(),
       openings: f.openings.value.trim(),
@@ -178,6 +301,196 @@
     closeAddLeadModal();
     renderLeads();
   });
+
+  /* ---------------- Single call from a row ---------------- */
+  function callLead(leadId) {
+    const lead = Store.getLeads().find(l => l.id === leadId);
+    if (!lead || !lead.phone) { showToast('No phone number saved for this lead.'); return; }
+    if (!confirm(`Call ${lead.company || lead.contact} at ${lead.phone}? Your phone will ring first, then it'll connect you to them.`)) return;
+    CallService.placeCall(lead.phone, lead.company || lead.contact);
+    Store.updateLeadStatus(lead.id, lead.status === 'New' ? 'Contacted' : lead.status);
+    renderLeads();
+  }
+
+  /* ---------------- Call queue: dial through several leads with one click each ---------------- */
+  let queue = [];
+  let queueIndex = 0;
+
+  function openCallQueue() {
+    const leads = Store.getLeads();
+    queue = Array.from(selectedLeadIds)
+      .map(id => leads.find(l => l.id === id))
+      .filter(l => l && l.phone);
+    if (!queue.length) { showToast('Select at least one lead with a phone number.'); return; }
+    queueIndex = 0;
+    document.getElementById('call-queue-panel').classList.add('open');
+    renderQueue();
+  }
+
+  function closeQueue() {
+    document.getElementById('call-queue-panel').classList.remove('open');
+    queue = [];
+    queueIndex = 0;
+  }
+
+  function renderQueue() {
+    const progressEl = document.getElementById('queue-progress');
+    const currentEl = document.getElementById('queue-current');
+    const actionsEl = document.getElementById('queue-actions');
+
+    if (queueIndex >= queue.length) {
+      progressEl.textContent = `Done — called through ${queue.length} lead${queue.length === 1 ? '' : 's'}.`;
+      currentEl.innerHTML = `<div class="name">All calls handled 🎉</div>`;
+      actionsEl.innerHTML = `<button class="btn btn-primary" onclick="closeQueue()">Close</button>`;
+      return;
+    }
+
+    const lead = queue[queueIndex];
+    progressEl.textContent = `Lead ${queueIndex + 1} of ${queue.length}`;
+    currentEl.innerHTML = `
+      <div class="name">${escapeHtml(lead.company || lead.contact || 'Unknown')}</div>
+      <div class="phone">${escapeHtml(lead.phone)}${lead.role ? ' · ' + escapeHtml(lead.role) : ''}</div>
+    `;
+    actionsEl.innerHTML = `
+      <button class="btn btn-primary" onclick="callCurrentInQueue()">Call</button>
+      <button class="btn btn-ghost" onclick="skipCurrentInQueue()">Skip</button>
+    `;
+  }
+
+  function callCurrentInQueue() {
+    const lead = queue[queueIndex];
+    if (!lead) return;
+    CallService.placeCall(lead.phone, lead.company || lead.contact);
+    Store.updateLeadStatus(lead.id, lead.status === 'New' ? 'Contacted' : lead.status);
+    document.getElementById('queue-actions').innerHTML = `
+      <button class="btn btn-primary" onclick="advanceQueue()">Next lead</button>
+    `;
+    renderLeads();
+  }
+
+  function skipCurrentInQueue() {
+    advanceQueue();
+  }
+
+  function advanceQueue() {
+    queueIndex++;
+    renderQueue();
+  }
+
+  /* ---------------- Excel import ---------------- */
+  let importParsedRows = [];
+  let importHeaders = [];
+
+  const IMPORT_FIELD_TARGETS = [
+    { key: 'company', label: 'Company', required: false },
+    { key: 'contact', label: 'Contact name', required: false },
+    { key: 'phone',   label: 'Phone number', required: true },
+    { key: 'email',   label: 'Email', required: false },
+    { key: 'role',    label: 'Role', required: false }
+  ];
+
+  function openImportModal() {
+    resetImportModal();
+    document.getElementById('import-modal').classList.add('open');
+  }
+  function closeImportModal() { document.getElementById('import-modal').classList.remove('open'); }
+
+  function resetImportModal() {
+    importParsedRows = [];
+    importHeaders = [];
+    document.getElementById('import-file-input').value = '';
+    document.getElementById('import-status').textContent = '';
+    document.getElementById('import-step-upload').style.display = 'block';
+    document.getElementById('import-step-mapping').style.display = 'none';
+    document.getElementById('import-step-done').style.display = 'none';
+  }
+
+  function guessColumn(header) {
+    const h = header.toLowerCase().trim();
+    if (/phone|mobile|contact\s*no|number|whatsapp/.test(h)) return 'phone';
+    if (/company|employer|organi[sz]ation|firm/.test(h)) return 'company';
+    if (/name|contact\s*person/.test(h) && !/company/.test(h)) return 'contact';
+    if (/email|mail/.test(h)) return 'email';
+    if (/role|position|designation|job/.test(h)) return 'role';
+    return '';
+  }
+
+  function handleImportFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    document.getElementById('import-status').textContent = 'Reading file…';
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'binary' });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+        if (!rows.length) {
+          document.getElementById('import-status').textContent = 'No rows found in this file.';
+          return;
+        }
+        importParsedRows = rows;
+        importHeaders = Object.keys(rows[0]);
+        showMappingStep();
+      } catch (err) {
+        document.getElementById('import-status').textContent = 'Could not read this file. Try saving it as .xlsx or .csv and re-uploading.';
+      }
+    };
+    reader.readAsBinaryString(file);
+  }
+
+  function showMappingStep() {
+    document.getElementById('import-step-upload').style.display = 'none';
+    document.getElementById('import-step-mapping').style.display = 'block';
+    document.getElementById('import-row-count').textContent = importParsedRows.length;
+
+    const container = document.getElementById('import-mapping-fields');
+    container.innerHTML = IMPORT_FIELD_TARGETS.map(target => {
+      const guessed = importHeaders.find(h => guessColumn(h) === target.key) || '';
+      return `
+        <div class="field">
+          <label>${target.label}${target.required ? ' *' : ''}</label>
+          <select id="map-${target.key}">
+            <option value="">— Not in this sheet —</option>
+            ${importHeaders.map(h => `<option value="${escapeHtml(h)}" ${h===guessed?'selected':''}>${escapeHtml(h)}</option>`).join('')}
+          </select>
+        </div>`;
+    }).join('');
+  }
+
+  function confirmImport() {
+    const mapping = {};
+    IMPORT_FIELD_TARGETS.forEach(t => {
+      mapping[t.key] = document.getElementById(`map-${t.key}`).value;
+    });
+    if (!mapping.phone) {
+      alert('Please map a Phone number column — it\'s required to enable calling.');
+      return;
+    }
+
+    let imported = 0, skipped = 0;
+    importParsedRows.forEach(row => {
+      const phone = String(row[mapping.phone] || '').trim();
+      if (!phone) { skipped++; return; }
+      Store.addLead({
+        company: mapping.company ? String(row[mapping.company] || '').trim() : '',
+        contact: mapping.contact ? String(row[mapping.contact] || '').trim() : '',
+        phone: phone,
+        email: mapping.email ? String(row[mapping.email] || '').trim() : '',
+        role: mapping.role ? String(row[mapping.role] || '').trim() : '',
+        openings: '',
+        message: '',
+        channel: 'Excel import'
+      });
+      imported++;
+    });
+
+    document.getElementById('import-step-mapping').style.display = 'none';
+    document.getElementById('import-step-done').style.display = 'block';
+    document.getElementById('import-done-message').textContent =
+      `Imported ${imported} lead${imported === 1 ? '' : 's'}` + (skipped ? `, skipped ${skipped} with no phone number` : '');
+    renderLeads();
+  }
 
   renderLeads();
 </script>
